@@ -33,6 +33,7 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async session({ session, token }) {
       if (token?.phone) {
+        // @ts-ignore
         session.user = { ...session.user, phone: token.phone };
       }
       return session;
