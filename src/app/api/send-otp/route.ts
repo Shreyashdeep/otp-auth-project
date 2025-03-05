@@ -1,21 +1,46 @@
-import { NextResponse } from "next/server";
-import redis from "@/src/lib/redis";
+import twilio from "twilio";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: Request) {
+// Initialize Twilio client
+const client = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
+
+export async function POST(req: NextRequest) {
   try {
     const { phone } = await req.json();
 
     if (!phone) {
-      return NextResponse.json({ error: "Phone number is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Phone number is required" },
+        { status: 400 }
+      );
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString(); 
-    await redis.set(`otp:${phone}`, otp, { ex: 300 }); 
+    // Generate a random 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    console.log(`OTP for ${phone}:`, otp); 
+    // Send OTP via Twilio
+    console.log("TWILIO_ACCOUNT_SID:", process.env.TWILIO_ACCOUNT_SID);
+    console.log("TWILIO_AUTH_TOKEN:", process.env.TWILIO_AUTH_TOKEN);
+    console.log("TWILIO_PHONE_NUMBER:", process.env.TWILIO_PHONE_NUMBER);
 
-    return NextResponse.json({ message: "OTP sent successfully" });
-  } catch (error) {
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+    console.log(phone);
+    const message = await client.messages.create({
+      body: `Your OTP code is: ${otp}`,
+      from: process.env.TWILIO_PHONE_NUMBER, // Use a verified Twilio number
+      to: phone.startsWith("+") ? phone : `+${phone}`, // Ensure proper format
+    });
+
+    console.log("OTP sent:", otp); // Remove this in production!
+
+    return NextResponse.json({ success: true, messageSid: message.sid });
+  } catch (error: any) {
+    console.error("Twilio error:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to send OTP" },
+      { status: 500 }
+    );
   }
 }

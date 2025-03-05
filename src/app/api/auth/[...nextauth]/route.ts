@@ -3,4 +3,5 @@ import { authOptions } from "@/src/lib/auth"; // Move authOptions to a separate 
 
 const handler = NextAuth(authOptions);
 
+
 export { handler as GET, handler as POST };

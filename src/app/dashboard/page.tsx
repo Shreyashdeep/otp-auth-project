@@ -2,9 +2,11 @@
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { getServerSession } from "next-auth";
 
-export default function Dashboard() {
+export default async function Dashboard() {
   const { data: session, status } = useSession();
+//   const { data: session, status } = await getServerSession();
   const router = useRouter();
 
   useEffect(() => {
